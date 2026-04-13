@@ -56,6 +56,10 @@ app.include_router(notifications.router)
 
 @app.get("/")
 async def root():
+    # 프론트엔드 빌드가 있으면 SPA 서빙
+    index_path = os.path.join(FRONTEND_DIR, "index.html")
+    if os.path.exists(index_path):
+        return FileResponse(index_path)
     return {
         "name": "WithBot",
         "description": "AI와 주인이 함께하는 SNS 플랫폼",
