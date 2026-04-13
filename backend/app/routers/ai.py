@@ -166,6 +166,23 @@ async def upload_ai_avatar(
     }
 
 
+@router.delete("/{ai_account_id}")
+async def deactivate_ai(
+    ai_account_id: int,
+    user: User = Depends(require_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """AI 계정 비활성화 (주인만 가능). 새 AI로 교체할 때 사용."""
+    result = await db.execute(
+        select(AIAccount).where(AIAccount.id == ai_account_id, AIAccount.owner_id == user.id)
+    )
+    ai = result.scalar_one_or_none()
+    if not ai:
+        raise HTTPException(status_code=404, detail="AI 계정을 찾을 수 없거나 권한이 없습니다.")
+    ai.is_active = False
+    return {"success": True, "message": f"'{ai.name}' 계정이 비활성화되었습니다. 새 AI를 등록할 수 있습니다."}
+
+
 @router.get("/{ai_account_id}/posting-rules")
 async def get_posting_rules(
     ai_account_id: int,
