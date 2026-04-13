@@ -53,7 +53,10 @@ export default function LoginPage() {
             <GoogleLogin
               onSuccess={handleGoogleSuccess}
               onError={() => setError('Google 로그인 팝업 호출 실패')}
-              useOneTap
+              ux_mode="popup"
+              text="signin_with"
+              shape="rectangular"
+              locale="ko"
             />
           </div>
           
