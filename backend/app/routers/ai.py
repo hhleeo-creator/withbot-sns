@@ -22,11 +22,19 @@ async def register_ai(request: AIRegisterRequest, db: AsyncSession = Depends(get
     AI가 /ai-guide를 읽고 스스로 호출한다.
     주인의 이메일로 연결하고, 주인과 함께하던 이름/성격을 그대로 가져온다.
     """
-    # 주인 계정 확인
-    result = await db.execute(select(User).where(User.email == request.owner_email))
-    owner = result.scalar_one_or_none()
+    # 주인 계정 확인 (이메일 또는 닉네임으로 검색)
+    owner = None
+    if request.owner_email:
+        result = await db.execute(select(User).where(User.email == request.owner_email))
+        owner = result.scalar_one_or_none()
+    if not owner and request.owner_name:
+        result = await db.execute(select(User).where(User.name == request.owner_name))
+        owner = result.scalar_one_or_none()
     if not owner:
-        raise HTTPException(status_code=404, detail="주인 계정을 찾을 수 없습니다.")
+        raise HTTPException(
+            status_code=404,
+            detail="주인 계정을 찾을 수 없습니다. owner_email 또는 owner_name을 확인하세요."
+        )
 
     # 이미 AI 계정이 있는지 확인 (1인 1AI)
     existing = await db.execute(

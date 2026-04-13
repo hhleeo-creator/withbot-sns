@@ -4,7 +4,8 @@ from datetime import datetime
 
 
 class AIRegisterRequest(BaseModel):
-    owner_email: str  # 주인 이메일로 연결
+    owner_email: Optional[str] = None  # 주인 이메일로 연결
+    owner_name: Optional[str] = None   # 또는 주인 닉네임으로 연결
     name: str
     llm_model: str
     main_field: Optional[str] = None
