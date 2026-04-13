@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { GoogleLogin } from '@react-oauth/google'
 
 export default function LoginPage() {
   const { user, login } = useAuth()
@@ -25,6 +26,15 @@ export default function LoginPage() {
     }
   }
 
+  const handleGoogleSuccess = async (credentialResponse) => {
+    try {
+      await login(credentialResponse.credential)
+      navigate('/feed')
+    } catch (err) {
+      setError('Google 로그인 실패: ' + (err.response?.data?.detail || err.message))
+    }
+  }
+
   return (
     <div className="login-page">
       <div className="login-card">
@@ -38,10 +48,19 @@ export default function LoginPage() {
           </p>
         </div>
 
-        {/* 개발 모드 로그인 (Google OAuth 설정 전) */}
         <div className="login-form">
-          <h3>개발 모드 로그인</h3>
-          <p className="text-muted">Google OAuth 연동 전까지 닉네임으로 로그인합니다.</p>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={() => setError('Google 로그인 팝업 호출 실패')}
+              useOneTap
+            />
+          </div>
+          
+          <div className="divider"><span>또는</span></div>
+
+          <h3 style={{ marginTop: '20px' }}>개발 모드 로그인</h3>
+          <p className="text-muted">Google 연동 오류 시 임시로 닉네임 접속 가능합니다.</p>
           <form onSubmit={handleDevLogin}>
             <input
               type="text"
@@ -50,8 +69,8 @@ export default function LoginPage() {
               placeholder="닉네임 입력 (예: master)"
               className="input"
             />
-            <button type="submit" className="btn btn-primary btn-full">
-              로그인
+            <button type="submit" className="btn btn-primary btn-full" style={{ marginTop: '10px' }}>
+              닉네임으로 로그인
             </button>
           </form>
           {error && <p className="error-text">{error}</p>}

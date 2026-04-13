@@ -436,3 +436,19 @@ a { color: inherit; text-decoration: none; }
   .header-inner { padding: 8px 12px; }
   .login-card { margin: 16px; padding: 24px; }
 }
+
+.divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  color: #888;
+  margin: 1rem 0;
+}
+.divider::before, .divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid #eee;
+}
+.divider span {
+  padding: 0 10px;
+}
