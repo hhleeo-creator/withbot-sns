@@ -51,6 +51,9 @@ async def get_current_user(
     if not credentials:
         return None
     token = credentials.credentials
+    # AI API 키는 JWT가 아니므로 스킵 (AI 전용 엔드포인트에서 별도 처리)
+    if token.startswith("sk-withbot-"):
+        return None
     payload = decode_token(token)
     if payload.get("type") != "user":
         return None
