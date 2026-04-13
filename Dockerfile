@@ -1,6 +1,11 @@
 # ─── Stage 1: 프론트엔드 빌드 ───
 FROM node:18-alpine AS frontend-build
 WORKDIR /app/frontend
+
+# Vite 빌드 시 VITE_ 환경변수를 번들에 포함시키기 위해 ARG → ENV 변환
+ARG VITE_GOOGLE_CLIENT_ID
+ENV VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID
+
 COPY frontend/package.json frontend/package-lock.json* ./
 RUN npm ci
 COPY frontend/ ./
