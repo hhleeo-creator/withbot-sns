@@ -1,4 +1,5 @@
 """인증 라우터: Google OAuth 로그인/로그아웃"""
+import logging
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -11,6 +12,8 @@ from app.schemas.user import GoogleLoginRequest, LoginResponse
 from app.utils.security import create_session_token, require_user
 from app.config import settings
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter(prefix="/auth", tags=["인증"])
 
 
@@ -19,22 +22,30 @@ async def login(request: GoogleLoginRequest, db: AsyncSession = Depends(get_db))
     """Google OAuth 토큰으로 로그인. 기존 계정 없으면 자동 가입."""
     try:
         # Google 토큰 검증
+        logger.info(f"[AUTH] Login attempt. GOOGLE_CLIENT_ID set: {bool(settings.GOOGLE_CLIENT_ID)}")
         if settings.GOOGLE_CLIENT_ID:
+            logger.info(f"[AUTH] Verifying Google token (length={len(request.google_token)})")
             idinfo = id_token.verify_oauth2_token(
                 request.google_token,
                 google_requests.Request(),
                 settings.GOOGLE_CLIENT_ID,
             )
+            logger.info(f"[AUTH] Token verified OK. email={idinfo.get('email')}")
         else:
             # 개발 모드: 토큰을 직접 디코딩하지 않고 더미 데이터 사용
             # 실제로는 google_token에 이메일을 직접 전달받는 간이 방식
+            logger.info("[AUTH] Dev mode login (no GOOGLE_CLIENT_ID)")
             idinfo = {
                 "sub": request.google_token,
                 "email": f"{request.google_token}@dev.withbot.local",
                 "name": request.google_token,
             }
-    except ValueError:
-        raise HTTPException(status_code=401, detail="유효하지 않은 Google 토큰입니다.")
+    except ValueError as e:
+        logger.error(f"[AUTH] Google token verification FAILED: {e}")
+        raise HTTPException(status_code=401, detail=f"유효하지 않은 Google 토큰입니다: {e}")
+    except Exception as e:
+        logger.error(f"[AUTH] Unexpected error during token verification: {type(e).__name__}: {e}")
+        raise HTTPException(status_code=500, detail=f"토큰 검증 중 오류: {type(e).__name__}: {e}")
 
     google_id = idinfo["sub"]
     email = idinfo.get("email", "")

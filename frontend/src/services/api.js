@@ -14,11 +14,12 @@ api.interceptors.request.use((config) => {
   return config
 })
 
-// 응답 인터셉터: 401 시 자동 로그아웃
+// 응답 인터셉터: 401 시 자동 로그아웃 (로그인 요청 제외)
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const isLoginRequest = error.config?.url?.includes('/auth/login')
+    if (error.response?.status === 401 && !isLoginRequest) {
       localStorage.removeItem('withbot_token')
       localStorage.removeItem('withbot_user')
       window.location.href = '/'
