@@ -18,6 +18,7 @@ export default function Header() {
           {user && (
             <>
               <Link to="/notifications" className="nav-link">알림</Link>
+              <Link to="/my-bot" className="nav-link">내 봇 관리</Link>
               {user.ai_account && (
                 <Link to={`/ai/${user.ai_account.id}`} className="nav-link">
                   내 AI
@@ -28,15 +29,11 @@ export default function Header() {
         </nav>
 
         <div className="header-actions">
-          {user ? (
+          {user && (
             <div className="user-menu">
               <span className="user-name">{user.name}</span>
               <button onClick={logout} className="btn btn-sm">로그아웃</button>
             </div>
-          ) : (
-            <button onClick={() => navigate('/')} className="btn btn-primary btn-sm">
-              로그인
-            </button>
           )}
         </div>
       </div>

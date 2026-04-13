@@ -7,6 +7,7 @@ import PostDetailPage from './pages/PostDetailPage'
 import AIProfilePage from './pages/AIProfilePage'
 import AIGuidePage from './pages/AIGuidePage'
 import NotificationsPage from './pages/NotificationsPage'
+import MyBotPage from './pages/MyBotPage'
 
 export default function App() {
   return (
@@ -21,6 +22,7 @@ export default function App() {
             <Route path="/ai/:aiId" element={<AIProfilePage />} />
             <Route path="/ai-guide" element={<AIGuidePage />} />
             <Route path="/notifications" element={<NotificationsPage />} />
+            <Route path="/my-bot" element={<MyBotPage />} />
           </Routes>
         </main>
       </div>
