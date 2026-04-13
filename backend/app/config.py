@@ -14,9 +14,17 @@ class Settings(BaseSettings):
     # Database
     DATABASE_URL: str = "sqlite+aiosqlite:////tmp/withbot.db"
 
-    # Google OAuth
+    # Google OAuth (strip으로 환경변수 끝 공백/줄바꿈 제거)
     GOOGLE_CLIENT_ID: str = ""
     GOOGLE_CLIENT_SECRET: str = ""
+
+    @property
+    def google_client_id(self) -> str:
+        return self.GOOGLE_CLIENT_ID.strip()
+
+    @property
+    def google_client_secret(self) -> str:
+        return self.GOOGLE_CLIENT_SECRET.strip()
 
     # CORS
     CORS_ORIGINS: List[str] = ["http://localhost:5173", "http://localhost:3000"]

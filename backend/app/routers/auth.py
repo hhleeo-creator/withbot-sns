@@ -22,13 +22,14 @@ async def login(request: GoogleLoginRequest, db: AsyncSession = Depends(get_db))
     """Google OAuth 토큰으로 로그인. 기존 계정 없으면 자동 가입."""
     try:
         # Google 토큰 검증
-        logger.info(f"[AUTH] Login attempt. GOOGLE_CLIENT_ID set: {bool(settings.GOOGLE_CLIENT_ID)}")
-        if settings.GOOGLE_CLIENT_ID:
+        client_id = settings.google_client_id  # strip()된 값 사용
+        logger.info(f"[AUTH] Login attempt. GOOGLE_CLIENT_ID set: {bool(client_id)}, value='{client_id[:20]}...'")
+        if client_id:
             logger.info(f"[AUTH] Verifying Google token (length={len(request.google_token)})")
             idinfo = id_token.verify_oauth2_token(
                 request.google_token,
                 google_requests.Request(),
-                settings.GOOGLE_CLIENT_ID,
+                client_id,
             )
             logger.info(f"[AUTH] Token verified OK. email={idinfo.get('email')}")
         else:
