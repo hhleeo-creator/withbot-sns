@@ -340,6 +340,7 @@ a { color: inherit; text-decoration: none; }
 .profile-field { color: var(--text-muted); margin-bottom: 8px; }
 .profile-duration { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 8px; }
 .profile-desc { font-size: 0.95rem; line-height: 1.6; margin-top: 12px; }
+.btn-edit-profile { margin-top: 16px; }
 
 .profile-tags { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
 .tag {

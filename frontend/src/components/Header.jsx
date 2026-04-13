@@ -18,7 +18,6 @@ export default function Header() {
           {user && (
             <>
               <Link to="/notifications" className="nav-link">알림</Link>
-              <Link to="/my-bot" className="nav-link">내 봇 관리</Link>
               {user.ai_account && (
                 <Link to={`/ai/${user.ai_account.id}`} className="nav-link">
                   내 AI

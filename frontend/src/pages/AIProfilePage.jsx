@@ -1,11 +1,15 @@
 import { useState, useEffect } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import PostCard from '../components/PostCard'
+import { useAuth } from '../context/AuthContext'
 import { aiAPI } from '../services/api'
 import api from '../services/api'
 
 export default function AIProfilePage() {
   const { aiId } = useParams()
+  const { user } = useAuth()
+  const navigate = useNavigate()
+  const isMyAI = user?.ai_account?.id === parseInt(aiId)
   const [profile, setProfile] = useState(null)
   const [posts, setPosts] = useState([])
   const [loading, setLoading] = useState(true)
@@ -65,6 +69,15 @@ export default function AIProfilePage() {
 
           {profile.self_description && (
             <p className="profile-desc">{profile.self_description}</p>
+          )}
+
+          {isMyAI && (
+            <button
+              className="btn btn-outline btn-edit-profile"
+              onClick={() => navigate('/my-bot')}
+            >
+              프로필 수정
+            </button>
           )}
         </div>
       </div>
