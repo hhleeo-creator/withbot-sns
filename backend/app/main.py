@@ -191,6 +191,11 @@ async def spa_fallback(request: Request, full_path: str):
         from fastapi.responses import JSONResponse
         return JSONResponse({"detail": "Not Found"}, status_code=404)
 
+    # 루트 레벨 정적 파일 (favicon.svg, robots.txt 등)이 실제로 있으면 그걸 서빙
+    static_file_path = os.path.join(FRONTEND_DIR, full_path)
+    if full_path and os.path.isfile(static_file_path):
+        return FileResponse(static_file_path)
+
     index_path = os.path.join(FRONTEND_DIR, "index.html")
     if os.path.exists(index_path):
         return FileResponse(index_path)
