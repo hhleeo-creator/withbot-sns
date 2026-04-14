@@ -1,9 +1,10 @@
 """AI 계정 라우터: 등록, 프로필 관리"""
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 import os
 import uuid
+import hashlib
 
 from app.database import get_db
 from app.models import User, AIAccount, AIPostingRules
@@ -46,16 +47,18 @@ async def register_ai(request: AIRegisterRequest, db: AsyncSession = Depends(get
     # API 키 생성
     api_key = generate_api_key()
 
-    # 랜덤 아바타 생성 (주인이 나중에 이미지 업로드 가능)
-    avatar_filename = generate_random_avatar(request.name)
-    avatar_url = f"/uploads/{avatar_filename}"
+    # 랜덤 아바타 생성 — DB에 바이트로 저장 (영속성)
+    avatar_bytes = generate_random_avatar(request.name)
+    avatar_version = hashlib.md5(avatar_bytes).hexdigest()[:8]
 
     # AI 계정 생성
     ai_account = AIAccount(
         owner_id=owner.id,
         name=request.name,
         api_key=api_key,
-        avatar_url=avatar_url,
+        avatar_url="",  # id 생성 후 업데이트
+        avatar_data=avatar_bytes,
+        avatar_mime="image/png",
         llm_model=request.llm_model,
         main_field=request.main_field,
         personality_tags=request.personality_tags,
@@ -64,6 +67,8 @@ async def register_ai(request: AIRegisterRequest, db: AsyncSession = Depends(get
     )
     db.add(ai_account)
     await db.flush()
+    # id 생성 후 avatar_url 설정
+    ai_account.avatar_url = f"/api/ai/{ai_account.id}/avatar?v={avatar_version}"
 
     # 디폴트 포스팅 규칙 생성
     posting_rules = AIPostingRules(
@@ -150,20 +155,46 @@ async def upload_ai_avatar(
     if ext not in ("png", "jpg", "jpeg", "gif", "webp"):
         raise HTTPException(status_code=400, detail="지원하지 않는 이미지 형식입니다.")
 
-    # 저장
-    filename = f"avatar_{ai.id}_{uuid.uuid4().hex[:8]}.{ext}"
-    filepath = os.path.join(settings.UPLOAD_DIR, filename)
-    with open(filepath, "wb") as f:
-        f.write(content)
+    # MIME 타입 결정
+    mime_map = {
+        "png": "image/png",
+        "jpg": "image/jpeg",
+        "jpeg": "image/jpeg",
+        "gif": "image/gif",
+        "webp": "image/webp",
+    }
+    mime = mime_map.get(ext, "image/png")
 
-    # DB 업데이트
-    ai.avatar_url = f"/uploads/{filename}"
+    # DB에 바이너리로 저장 (Render 무료 티어 파일시스템 영속성 문제 해결)
+    ai.avatar_data = content
+    ai.avatar_mime = mime
+    # 캐시 무효화용 해시 (파일이 바뀌면 URL도 바뀌도록)
+    version = hashlib.md5(content).hexdigest()[:8]
+    ai.avatar_url = f"/api/ai/{ai.id}/avatar?v={version}"
 
     return {
         "success": True,
         "avatar_url": ai.avatar_url,
         "message": "아바타가 업로드되었습니다.",
     }
+
+
+@router.get("/{ai_account_id}/avatar")
+async def get_ai_avatar(ai_account_id: int, db: AsyncSession = Depends(get_db)):
+    """AI 아바타 이미지 스트리밍 (DB에 저장된 바이너리 서빙).
+
+    쿼리 파라미터 v는 캐시 무효화용이라 무시.
+    """
+    result = await db.execute(select(AIAccount).where(AIAccount.id == ai_account_id))
+    ai = result.scalar_one_or_none()
+    if not ai or not ai.avatar_data:
+        raise HTTPException(status_code=404, detail="아바타가 없습니다.")
+
+    return Response(
+        content=ai.avatar_data,
+        media_type=ai.avatar_mime or "image/png",
+        headers={"Cache-Control": "public, max-age=86400"},
+    )
 
 
 @router.delete("/{ai_account_id}")

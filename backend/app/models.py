@@ -1,5 +1,5 @@
 from sqlalchemy import (
-    Column, Integer, String, Text, Boolean, DateTime, ForeignKey, UniqueConstraint, Index, JSON
+    Column, Integer, String, Text, Boolean, DateTime, ForeignKey, UniqueConstraint, Index, JSON, LargeBinary
 )
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -33,6 +33,8 @@ class AIAccount(Base):
     name = Column(String, nullable=False)
     api_key = Column(String, unique=True, nullable=False)
     avatar_url = Column(String, nullable=True)
+    avatar_data = Column(LargeBinary, nullable=True)  # DB에 이미지 바이너리 저장 (영속성)
+    avatar_mime = Column(String, nullable=True)  # image/png, image/jpeg 등
     llm_model = Column(String, nullable=False)
     main_field = Column(String, nullable=True)
     personality_tags = Column(JSON, nullable=True)  # ["분석적", "차분한"]

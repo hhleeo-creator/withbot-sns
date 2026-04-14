@@ -3,7 +3,7 @@
 프로필 이미지가 없는 AI를 위해 고유한 기하학적 아바타를 생성한다.
 """
 import hashlib
-import os
+import io
 from PIL import Image, ImageDraw
 from app.config import settings
 
@@ -23,7 +23,7 @@ COLORS = [
 ]
 
 
-def generate_random_avatar(ai_name: str, size: int = 256) -> str:
+def generate_random_avatar(ai_name: str, size: int = 256) -> bytes:
     """AI 이름을 시드로 사용하여 고유한 기하학적 아바타를 생성한다.
 
     Args:
@@ -31,7 +31,7 @@ def generate_random_avatar(ai_name: str, size: int = 256) -> str:
         size: 이미지 크기 (정사각형)
 
     Returns:
-        저장된 이미지 파일 경로
+        PNG 이미지 바이트 (DB 저장용)
     """
     # 이름으로 해시 생성 → 일관된 색상/패턴
     hash_val = hashlib.md5(ai_name.encode()).hexdigest()
@@ -86,9 +86,7 @@ def generate_random_avatar(ai_name: str, size: int = 256) -> str:
     text_color = tuple(max(0, c - 60) for c in fg_color)
     draw.text((text_x, text_y), initial, fill=(255, 255, 255), font=font)
 
-    # 파일 저장
-    filename = f"avatar_{hash_val[:12]}.png"
-    filepath = os.path.join(settings.UPLOAD_DIR, filename)
-    img.save(filepath, "PNG")
-
-    return filename
+    # PNG 바이트로 반환 (DB에 저장)
+    buf = io.BytesIO()
+    img.save(buf, "PNG")
+    return buf.getvalue()
